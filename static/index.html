@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Clone</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <button class="new-chat-btn" id="new-chat-btn">+ New Chat</button>
+            <div class="history-list" id="history-list">
+                <!-- Chat history items will be populated here -->
+            </div>
+            <div class="user-profile">
+                <div class="avatar">U</div>
+                <div class="user-info">User</div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <div class="chat-header">
+                <h2>ChatGPT Clone</h2>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="welcome-message" id="welcome-message">
+                    <h1>How can I help you today?</h1>
+                </div>
+                <!-- Dynamic messages go here -->
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea id="message-input" placeholder="Message ChatGPT..." rows="1"></textarea>
+                    <button id="send-btn" class="send-btn" disabled>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="send-icon">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="footer-text">
+                    ChatGPT Clone can make mistakes. Consider verifying important information.
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
