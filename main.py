@@ -1,6 +1,8 @@
 import os
 import asyncio
-from fastapi import FastAPI, HTTPException, Request
+import uuid
+import PIL.Image
+from fastapi import FastAPI, HTTPException, Request, Form, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -16,15 +18,16 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 
 app = FastAPI()
 
+# Make sure uploads directory exists
+UPLOAD_DIR = "static/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 # Mount the static directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Database initialization
 database.init_db()
 
-class MessageRequest(BaseModel):
-    content: str
-    
 class ChatCreateRequest(BaseModel):
     title: str
 
@@ -53,9 +56,17 @@ async def get_chat_messages(chat_id: int):
     return database.get_messages(chat_id)
 
 @app.post("/api/chats/{chat_id}/messages")
-async def send_message(chat_id: int, req: MessageRequest):
+async def send_message(chat_id: int, content: str = Form(...), image: UploadFile = File(None)):
+    image_path = None
+    if image and image.filename:
+        # Generate a unique filename
+        filename = f"{uuid.uuid4()}_{image.filename}"
+        image_path = os.path.join(UPLOAD_DIR, filename)
+        with open(image_path, "wb") as f:
+            f.write(await image.read())
+            
     # Save user message
-    database.add_message(chat_id, "user", req.content)
+    database.add_message(chat_id, "user", content, image_path)
     
     try:
         # Load all messages for context
@@ -65,10 +76,18 @@ async def send_message(chat_id: int, req: MessageRequest):
         # exclude the very last user message from history because it will be passed to send_message
         for msg in past_msgs[:-1]: 
             role = "user" if msg["role"] == "user" else "model"
-            history.append({"role": role, "parts": [msg["content"]]})
+            parts = [msg["content"]]
+            if msg.get("image_path") and os.path.exists(msg["image_path"]):
+                parts.append(PIL.Image.open(msg["image_path"]))
+            history.append({"role": role, "parts": parts})
         
         chat = model.start_chat(history=history)
-        response = chat.send_message(req.content)
+        
+        current_parts = [content]
+        if image_path and os.path.exists(image_path):
+            current_parts.append(PIL.Image.open(image_path))
+            
+        response = chat.send_message(current_parts)
         ai_response = response.text
         
     except Exception as e:

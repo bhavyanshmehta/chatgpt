@@ -8,7 +8,15 @@ const themeToggleBtn = document.getElementById('theme-toggle-btn');
 const themeIcon = document.getElementById('theme-icon');
 const themeText = document.getElementById('theme-text');
 
+// Image upload elements
+const uploadBtn = document.getElementById('upload-btn');
+const fileInput = document.getElementById('file-input');
+const imagePreviewContainer = document.getElementById('image-preview-container');
+const imagePreview = document.getElementById('image-preview');
+const removeImageBtn = document.getElementById('remove-image-btn');
+
 let currentChatId = null;
+let selectedImage = null;
 
 // Theme Toggle Logic
 function initTheme() {
@@ -39,11 +47,39 @@ if (themeToggleBtn) {
 
 initTheme();
 
+// Image Upload Listeners
+if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            selectedImage = this.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.style.display = 'block';
+            }
+            reader.readAsDataURL(selectedImage);
+            sendBtn.disabled = false;
+        }
+    });
+
+    removeImageBtn.addEventListener('click', () => {
+        selectedImage = null;
+        fileInput.value = '';
+        imagePreviewContainer.style.display = 'none';
+        imagePreview.src = '';
+        sendBtn.disabled = messageInput.value.trim() === '';
+    });
+}
+
 // Adjust textarea height automatically
 messageInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
-    sendBtn.disabled = this.value.trim() === '';
+    sendBtn.disabled = this.value.trim() === '' && !selectedImage;
 });
 
 messageInput.addEventListener('keydown', function(e) {
@@ -104,7 +140,10 @@ async function loadChat(chatId) {
                 </div>
             `;
         } else {
-            messages.forEach(m => appendMessage(m.role, m.content));
+            messages.forEach(m => {
+                const imgUrl = m.image_path ? `/${m.image_path}` : null;
+                appendMessage(m.role, m.content, imgUrl);
+            });
             scrollToBottom();
         }
     } catch(e) {
@@ -114,12 +153,23 @@ async function loadChat(chatId) {
 
 async function sendMessage() {
     const text = messageInput.value.trim();
-    if (!text) return;
+    if (!text && !selectedImage) return;
     
+    const currentText = text || "Attached Image";
+
     // Disable input
     messageInput.value = '';
     messageInput.style.height = 'auto';
     sendBtn.disabled = true;
+    imagePreviewContainer.style.display = 'none';
+    
+    // Store image for rendering
+    const fileToSend = selectedImage;
+    const localImageSrc = imagePreview.src;
+    
+    selectedImage = null;
+    fileInput.value = '';
+    imagePreview.src = '';
     
     if (document.getElementById('welcome-message')) {
         document.getElementById('welcome-message').remove();
@@ -127,7 +177,7 @@ async function sendMessage() {
     
     // If no chat selected, create one based on message title
     if (!currentChatId) {
-        const title = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+        const title = text ? (text.substring(0, 30) + (text.length > 30 ? '...' : '')) : 'Image Chat';
         try {
             const res = await fetch('/api/chats', {
                 method: 'POST',
@@ -144,7 +194,7 @@ async function sendMessage() {
     }
     
     // Append user message
-    appendMessage('user', text);
+    appendMessage('user', currentText, fileToSend ? localImageSrc : null);
     scrollToBottom();
     
     // Show typing indicator
@@ -152,12 +202,17 @@ async function sendMessage() {
     appendTypingIndicator(indicatorId);
     scrollToBottom();
     
-    // Send to API
+    // Send to API via FormData
     try {
+        const formData = new FormData();
+        formData.append('content', currentText);
+        if (fileToSend) {
+            formData.append('image', fileToSend);
+        }
+
         const res = await fetch(`/api/chats/${currentChatId}/messages`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: text })
+            body: formData
         });
         const data = await res.json();
         
@@ -174,7 +229,7 @@ async function sendMessage() {
     }
 }
 
-function appendMessage(role, content) {
+function appendMessage(role, content, imageSrc = null) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
     
@@ -182,16 +237,26 @@ function appendMessage(role, content) {
     avatar.className = 'message-avatar';
     avatar.textContent = role === 'user' ? 'U' : 'AI';
     
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.textContent = content; // prevents HTML injection
+    const contentContainer = document.createElement('div');
+    contentContainer.className = 'message-content';
+    
+    if (imageSrc) {
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        img.className = 'message-image';
+        contentContainer.appendChild(img);
+    }
+    
+    const textDiv = document.createElement('div');
+    textDiv.textContent = content; // prevents HTML injection
+    contentContainer.appendChild(textDiv);
     
     if (role === 'user') {
-        div.appendChild(contentDiv);
+        div.appendChild(contentContainer);
         div.appendChild(avatar);
     } else {
         div.appendChild(avatar);
-        div.appendChild(contentDiv);
+        div.appendChild(contentContainer);
     }
     
     chatMessages.appendChild(div);

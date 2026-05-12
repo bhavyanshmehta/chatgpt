@@ -26,9 +26,16 @@ def init_db():
                             chat_id INTEGER NOT NULL,
                             role TEXT NOT NULL,
                             content TEXT NOT NULL,
+                            image_path TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY (chat_id) REFERENCES chats (id)
                         );''')
+            # Try to add image_path to existing table
+            try:
+                c.execute("ALTER TABLE messages ADD COLUMN image_path TEXT;")
+            except sqlite3.OperationalError:
+                pass # Column exists
+            
             conn.commit()
         except Error as e:
             print(e)
@@ -67,13 +74,13 @@ def get_chats():
             conn.close()
     return chats
 
-def add_message(chat_id, role, content):
+def add_message(chat_id, role, content, image_path=None):
     conn = create_connection()
     if conn is not None:
         try:
-            sql = ''' INSERT INTO messages(chat_id, role, content) VALUES(?,?,?) '''
+            sql = ''' INSERT INTO messages(chat_id, role, content, image_path) VALUES(?,?,?,?) '''
             cur = conn.cursor()
-            cur.execute(sql, (chat_id, role, content))
+            cur.execute(sql, (chat_id, role, content, image_path))
             conn.commit()
         except Error as e:
             print(e)
@@ -86,10 +93,10 @@ def get_messages(chat_id):
     if conn is not None:
         try:
             cur = conn.cursor()
-            cur.execute("SELECT role, content FROM messages WHERE chat_id=? ORDER BY created_at ASC", (chat_id,))
+            cur.execute("SELECT role, content, image_path FROM messages WHERE chat_id=? ORDER BY created_at ASC", (chat_id,))
             rows = cur.fetchall()
             for row in rows:
-                messages.append({"role": row[0], "content": row[1]})
+                messages.append({"role": row[0], "content": row[1], "image_path": row[2]})
         except Error as e:
             print(e)
         finally:

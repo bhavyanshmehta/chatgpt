@@ -464,6 +464,80 @@ textarea::placeholder {
     40% { transform: scale(1.2); opacity: 1; }
 }
 
+/* Image Upload Styles */
+.upload-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+}
+
+.upload-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.image-preview-container {
+    max-width: 850px;
+    margin: 0 auto 12px auto;
+    position: relative;
+    width: fit-content;
+    background: var(--input-bg);
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.image-preview-container img {
+    max-height: 150px;
+    max-width: 100%;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    transition: transform 0.2s;
+}
+
+.remove-image-btn:hover {
+    transform: scale(1.1);
+}
+
+.message-image {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    object-fit: contain;
+    border: 1px solid var(--border-color);
+}
+
 /* Responsiveness */
 @media (max-width: 768px) {
     .sidebar {
