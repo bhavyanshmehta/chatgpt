@@ -3,3 +3,4 @@ __pycache__/
 .env
 chat_app.db
 .DS_Store
+static/uploads/
