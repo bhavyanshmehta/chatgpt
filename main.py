@@ -51,6 +51,14 @@ async def create_new_chat(req: ChatCreateRequest):
 async def get_all_chats():
     return database.get_chats()
 
+class ChatRenameRequest(BaseModel):
+    title: str
+
+@app.put("/api/chats/{chat_id}")
+async def rename_chat(chat_id: int, req: ChatRenameRequest):
+    database.rename_chat(chat_id, req.title)
+    return {"status": "success"}
+
 @app.get("/api/chats/{chat_id}")
 async def get_chat_messages(chat_id: int):
     return database.get_messages(chat_id)

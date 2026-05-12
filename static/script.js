@@ -100,8 +100,54 @@ async function loadChats() {
         chats.forEach(chat => {
             const div = document.createElement('div');
             div.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
-            div.textContent = chat.title;
-            div.onclick = () => loadChat(chat.id);
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'history-item-title';
+            titleSpan.textContent = chat.title;
+            titleSpan.onclick = () => loadChat(chat.id);
+            
+            const renameBtn = document.createElement('button');
+            renameBtn.className = 'rename-btn';
+            renameBtn.innerHTML = '✎';
+            renameBtn.title = "Rename chat";
+            renameBtn.onclick = (e) => {
+                e.stopPropagation();
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'rename-input';
+                input.value = chat.title;
+                input.onclick = (ev) => ev.stopPropagation();
+                
+                input.onkeydown = async (ev) => {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        const newTitle = input.value.trim();
+                        if (newTitle && newTitle !== chat.title) {
+                            try {
+                                await fetch(`/api/chats/${chat.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ title: newTitle })
+                                });
+                            } catch(err) {
+                                console.error("Rename failed");
+                            }
+                        }
+                        loadChats();
+                    } else if (ev.key === 'Escape') {
+                        loadChats();
+                    }
+                };
+                
+                input.onblur = () => loadChats();
+                
+                div.innerHTML = '';
+                div.appendChild(input);
+                input.focus();
+            };
+            
+            div.appendChild(titleSpan);
+            div.appendChild(renameBtn);
             historyList.appendChild(div);
         });
     } catch (e) {
@@ -248,7 +294,16 @@ function appendMessage(role, content, imageSrc = null) {
     }
     
     const textDiv = document.createElement('div');
-    textDiv.textContent = content; // prevents HTML injection
+    
+    if (role === 'assistant' || role === 'model') {
+        textDiv.innerHTML = marked.parse(content);
+        textDiv.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+    } else {
+        textDiv.textContent = content; // User text escapes HTML
+    }
+    
     contentContainer.appendChild(textDiv);
     
     if (role === 'user') {

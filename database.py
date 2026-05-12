@@ -102,3 +102,16 @@ def get_messages(chat_id):
         finally:
             conn.close()
     return messages
+
+def rename_chat(chat_id, new_title):
+    conn = create_connection()
+    if conn is not None:
+        try:
+            sql = ''' UPDATE chats SET title = ? WHERE id = ? '''
+            cur = conn.cursor()
+            cur.execute(sql, (new_title, chat_id))
+            conn.commit()
+        except Error as e:
+            print(e)
+        finally:
+            conn.close()
