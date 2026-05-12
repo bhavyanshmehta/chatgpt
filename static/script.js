@@ -4,8 +4,40 @@ const chatMessages = document.getElementById('chat-messages');
 const historyList = document.getElementById('history-list');
 const newChatBtn = document.getElementById('new-chat-btn');
 const welcomeMessage = document.getElementById('welcome-message');
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
+const themeIcon = document.getElementById('theme-icon');
+const themeText = document.getElementById('theme-text');
 
 let currentChatId = null;
+
+// Theme Toggle Logic
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        if (themeIcon) themeIcon.textContent = '🌙';
+        if (themeText) themeText.textContent = 'Dark Mode';
+    }
+}
+
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        
+        if (isLight) {
+            localStorage.setItem('theme', 'light');
+            themeIcon.textContent = '🌙';
+            themeText.textContent = 'Dark Mode';
+        } else {
+            localStorage.setItem('theme', 'dark');
+            themeIcon.textContent = '☀️';
+            themeText.textContent = 'Light Mode';
+        }
+    });
+}
+
+initTheme();
 
 // Adjust textarea height automatically
 messageInput.addEventListener('input', function() {
